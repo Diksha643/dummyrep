@@ -1,0 +1,114 @@
+<br>
+<br>
+<br>
+<br>
+<html>
+<head>
+  <link rel="stylesheet" href="greetings.scss">
+  <!-- sdks used for firestore -->
+  <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-firestore.js">
+  </script>
+
+  <!-- TODO: Add SDKs for Firebase products that you want to use
+       https://firebase.google.com/docs/web/setup#available-libraries -->
+  <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-analytics.js"></script>
+
+</head>
+<body>
+
+<h1 text align="center">Firestore</h1>
+
+<div class="content">
+
+  <form id="add-cafe-form">
+    <input type="text" name="name" placeholder="Cafe name">
+    <input type="text" name="city" placeholder="Cafe city">
+    <button>Add Cafe</button>
+  </form>
+
+  <ul id="cafe-list"></ul>
+
+</div>
+<script>
+
+//configure object defined with the given values
+var firebaseConfig = {
+    apiKey: "AIzaSyDqofvaInwBq6AGh6aKY3mq4CT2Yvzm4Yc",
+    authDomain: "myproject-f90ea.firebaseapp.com",
+    databaseURL: "https://myproject-f90ea.firebaseio.com",
+    projectId: "myproject-f90ea",
+    storageBucket: "myproject-f90ea.appspot.com",
+    messagingSenderId: "631674537575",
+    appId: "1:631674537575:web:6738b548bb37c1acb6b6c2",
+    measurementId: "G-32D8MBGJKD"
+};
+
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
+const cafeList=document.querySelector("#cafe-list");
+const form = document.querySelector('#add-cafe-form');
+function renderCafe(doc)
+{
+    let li=document.createElement('li');
+    let name=document.createElement('span');
+    let city=document.createElement('span');
+    let cross = document.createElement('div');
+    li.setAttribute('data-id',doc.id);
+    name.textContent=doc.data().name;
+    city.textContent=doc.data().city;
+    li.appendChild(name);
+    li.appendChild(city);
+    li.appendChild(cross);
+    cafeList.appendChild(li);
+    //deleting data
+    cross.addEventListener('click', (e) => {
+        e.stopPropagation();
+        let id = e.target.parentElement.getAttribute('data-id');
+        db.collection('cafes').doc(id).delete();
+    });
+}
+
+const db=firebase.firestore();
+//to remove warnings from console
+db.settings({ timestampsInSnapshots: true})
+//reading data from firestore
+//db.collection('cafes').where('city','==','delhi').orderBy('name').get().then((snapshot)=>{
+//    snapshot.docs.forEach(doc=>{
+//console.log(doc.data())
+//        renderCafe(doc);
+//    })
+
+
+
+//})
+//Real time listenersddd
+db.collection('cafes').orderBy('city').onSnapshot(snapshot => {
+    let changes = snapshot.docChanges();
+    changes.forEach(change => {
+        console.log(change.doc.data());
+        if(change.type == 'added'){
+            renderCafe(change.doc);
+        } else if (change.type == 'removed'){
+            let li = cafeList.querySelector('[data-id=' + change.doc.id + ']');
+            cafeList.removeChild(li);
+        }
+    });
+});
+
+    //adding data to firestore
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    db.collection('cafes').add({
+        name: form.name.value,
+        city: form.city.value
+    });
+    form.name.value = '';
+    form.city.value = '';
+});
+
+</script>
+</body>
+</html>
+
